@@ -1,0 +1,28 @@
+-A ufw-not-local -m addrtype --dst-type BROADCAST -j RETURN
+
+# all other non-local packets are dropped
+-A ufw-not-local -m limit --limit 3/min --limit-burst 10 -j ufw-logging-deny
+-A ufw-not-local -j DROP
+
+# allow MULTICAST mDNS for service discovery (be sure the MULTICAST line above
+# is uncommented)
+-A ufw-before-input -p udp -d 224.0.0.251 --dport 5353 -j ACCEPT
+
+# allow MULTICAST UPnP for service discovery (be sure the MULTICAST line above
+# is uncommented)
+-A ufw-before-input -p udp -d 239.255.255.250 --dport 1900 -j ACCEPT
+
+# Permitir tráfico DNS entrante
+-A ufw-before-input -p udp --dport 53 -j ACCEPT
+-A ufw-before-input -p tcp --dport 53 -j ACCEPT
+
+# Permitir tráfico de retorno DNS
+-A ufw-before-forward -p udp -s 192.168.50.3 --sport 53 -d 192.168.50.2 -j ACCEPT
+-A ufw-before-forward -p tcp -s 192.168.50.3 --sport 53 -d 192.168.50.2 -j ACCEPT
+
+-A ufw-before-forward -p udp --dport 53 -j ACCEPT
+-A ufw-before-forward -p tcp --dport 53 -j ACCEPT
+-A ufw-before-forward -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+# don't delete the 'COMMIT' line or these rules won't be processed
+COMMIT
